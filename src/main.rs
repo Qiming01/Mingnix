@@ -1,9 +1,12 @@
 
 use tokio::runtime;
 use config::*;
+use app::{RunType, run};
 
 mod config;
 mod util;
+mod app;
+mod macher;
 
 fn main() {
     runtime::Builder::new_multi_thread()
