@@ -7,12 +7,10 @@ use hyper::Method as HttpMethod;
 use std::net::SocketAddr;
 use std::path::PathBuf;
 
-
 pub const SERVER_NAME: &str = crate_name!();
 
 pub const VERSION: &str = crate_version!();
 
-// Config file
 
 pub fn config_path() -> String {
     home_dir().join(".see.conf").display().to_string()
@@ -34,10 +32,10 @@ pub const DIRECTORY_TIME_FORMAT: &str = "%Y-%m-%d %H:%M";
 
 pub const BUF_SIZE: usize = 16 * 1024;
 
-// Should be synchronized with src/var.rs
 pub const LOG_FORMAT: &str = "$`method` $`header_host`$`path`$`query` $`header_user-agent`";
 
-/** 默认配置 */
+// 默认配置
+
 pub fn bind_addr() -> SocketAddr {
     "127.0.0.1:8080".parse::<SocketAddr>().unwrap()
 }

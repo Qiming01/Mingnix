@@ -1,9 +1,7 @@
+use crate::{default, exit, util};
+use clap::{App, AppSettings, Arg, SubCommand};
 use std::net::SocketAddr;
 use std::path::PathBuf;
-use clap::{App, AppSettings, Arg, SubCommand};
-use crate::default;
-use crate::exit;
-use crate::util;
 
 #[derive(Debug)]
 pub enum RunType {
