@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
-use tokio::{fs, io::{AsyncWriteExt, AsyncReadExt}, net::TcpStream};
+use tokio::{fs, io::{AsyncWriteExt}, net::TcpStream};
 
 use crate::{
     http::{
@@ -18,7 +18,6 @@ pub struct Echo<'a> {
     pub path_buf: &'a [u8],
 }
 pub struct StaticFile<'a> {
-    // 似乎只能把这个buffer放在这里，如果在handler里面处理就会无法读取请求，导致阻塞线程
     pub path_buf: &'a [u8],
 }
 

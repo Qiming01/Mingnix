@@ -10,6 +10,7 @@ pub struct Request {
 }
 
 impl Request {
+    #[allow(unused)]
     pub fn new() -> Self {
         Self {
             method: HttpMethod::Get,
@@ -17,7 +18,7 @@ impl Request {
             version: HttpVersion::V1_1,
         }
     }
-
+    #[allow(unused)]
     pub fn method(&self) -> HttpMethod {
         self.method
     }
@@ -26,6 +27,7 @@ impl Request {
         self.path.clone()
     }
 
+    #[allow(unused)]
     pub fn version(&self) -> HttpVersion {
         self.version
     }
@@ -63,16 +65,19 @@ impl Request {
 }
 
 impl Request {
+    #[allow(unused)]
     pub fn set_method(&mut self, method: HttpMethod) -> Self {
         self.method = method;
         self.to_owned()
     }
 
+    #[allow(unused)]
     pub fn set_path(&mut self, path: String) -> Self {
         self.path = path;
         self.to_owned()
     }
 
+    #[allow(unused)]
     pub fn set_version(&mut self, version: HttpVersion) -> Self {
         self.version = version;
         self.to_owned()

@@ -61,6 +61,7 @@ impl<'a> Response<'a> {
         }
     }
 
+    #[allow(unused)]
     pub fn set_version(&mut self, version: HttpVersion) -> &mut Self {
         self.version = version;
         self
@@ -108,7 +109,9 @@ impl From<&str> for HttpVersion {
 pub enum HttpStatus {
     Ok,
     NotFound,
+    #[allow(unused)]
     BadRequest,
+    #[allow(unused)]
     InternalServerError,
 }
 
