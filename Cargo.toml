@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 async-trait = "0.1.60"
 tokio = { version = "1.23.0", features = ["full"] }
+clap = "3.0.0-beta.5"

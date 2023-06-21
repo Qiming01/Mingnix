@@ -6,6 +6,8 @@ use tokio::{
     net::{TcpListener, TcpStream},
 };
 
+use clap::{Arg, App};
+
 mod http;
 mod server;
 
@@ -18,8 +20,22 @@ pub struct SharedData {
 
 #[tokio::main]
 async fn main() {
-    let listener = TcpListener::bind("127.0.0.1:5000").await.unwrap();
-    println!("Server start at http://127.0.0.1:5000");
+    let matches = App::new("Minginx")
+        .version("1.0")
+        .author("Qi Ming <qimingme@gmail.com>")
+        .about("run server")
+        .arg(Arg::with_name("port")
+             .short('p')
+             .long("port")
+             .value_name("PORT")
+             .help("Sets a custom port")
+             .takes_value(true))
+        .get_matches();
+
+    let port = matches.value_of("port").unwrap_or("5000");
+    
+    let listener = TcpListener::bind(format!("127.0.0.1:{}", port)).await.unwrap();
+    println!("Server start at http://127.0.0.1:{}", port);
 
     let shared_data = Arc::new(Mutex::new(SharedData { visit_count: 0 }));
     loop {
