@@ -1,6 +1,7 @@
 #![allow(clippy::unused_io_amount)]
-use std::sync::{Arc, Mutex};
+use std::{sync::{Arc, Mutex}, net::SocketAddr};
 
+use log::{info, error};
 use tokio::{
     io::AsyncReadExt,
     net::{TcpListener, TcpStream},
@@ -20,6 +21,8 @@ pub struct SharedData {
 
 #[tokio::main]
 async fn main() {
+    env_logger::init();
+
     let matches = App::new("Minginx")
         .version("1.0")
         .author("Qi Ming <qimingme@gmail.com>")
@@ -39,18 +42,27 @@ async fn main() {
 
     let shared_data = Arc::new(Mutex::new(SharedData { visit_count: 0 }));
     loop {
-        let (mut stream, _) = listener.accept().await.unwrap();
+        match listener.accept().await {
+            Ok((mut stream, addr)) => {
+                info!("New connection accepted");
+                let shared_data = Arc::clone(&shared_data);
 
-        let shared_data = Arc::clone(&shared_data);
+                tokio::spawn(async move {
+                    let mut buffer = [0; 1024];
 
-        tokio::spawn(async move {
-            let mut buffer = [0; 1024];
+                    stream.read(&mut buffer).await.unwrap();
+                    //info!("{}", String::from_utf8_lossy(&buffer));
+                    // Log the client's information
+                    log_client_info(addr, &buffer);
 
-            stream.read(&mut buffer).await.unwrap();
-            // println!("{}", String::from_utf8_lossy(&buffer));
-
-            route(&mut stream, &buffer, shared_data).await;
-        });
+                    route(&mut stream, &buffer, shared_data).await;
+        
+                });
+            }
+            Err(e) => {
+                error!("Failed to accept connection: {}", e);
+            }
+        }
     }
 }
 
@@ -73,4 +85,14 @@ async fn route(stream: &mut TcpStream, buffer: &[u8], shared_data: Arc<Mutex<Sha
         // 404
         NotFound.handle(stream, shared_data).await;
     }
+}
+
+fn log_client_info(addr: SocketAddr, buffer: &[u8]) {
+    let request_line = std::str::from_utf8(buffer)
+        .unwrap_or_default()
+        .lines()
+        .next()
+        .unwrap_or_default();
+
+    info!("Client {}: {}", addr, request_line);
 }
