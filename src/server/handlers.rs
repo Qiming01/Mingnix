@@ -92,16 +92,9 @@ impl Handler for StaticFile<'_> {
 
         // GET /static/...
         for i in buf.split_whitespace() {
-            //println!("******************\n {} \n *****************\n", i);
             if i.contains("/static/") {
-                println!("{}", i);
-                // let path = i.split('/').collect::<Vec<&str>>()[2]; // static/<path>
                 let path = i.splitn(2, "static/").nth(1).unwrap();
                 let file = fs::read(format!("static/{path}")).await;
-
-                // 也可以直接使用URL里的 `static/<path>`，不过像上面这样写可以用在当静态文件的文件夹不是 `static` 的时候
-                // let path = i.strip_prefix('/').unwrap_or_default();
-                // let file = fs::read(path).await;
 
                 if let Ok(f) = file {
                     let content_type = parse_content_type(path);
