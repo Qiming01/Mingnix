@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
-use tokio::{fs, io::{AsyncWriteExt}, net::TcpStream};
+use tokio::{fs, io::AsyncWriteExt, net::TcpStream};
 
 use crate::{
     http::{
@@ -147,6 +147,8 @@ fn parse_content_type(req: &str) -> ContentType {
         ContentType::Css
     } else if req.contains(".png") || req.contains(".jpg") || req.contains(".ico") {
         ContentType::AvifImage
+    } else if req.contains(".mp4") {
+        ContentType::Mp4Video
     } else {
         ContentType::Html
     }

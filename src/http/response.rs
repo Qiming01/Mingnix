@@ -132,6 +132,7 @@ pub enum ContentType {
     PlainText,
     AvifImage,
     Css,
+    Mp4Video, // test
 }
 
 impl From<&str> for ContentType {
@@ -142,6 +143,7 @@ impl From<&str> for ContentType {
             "text/html" => Self::Html,
             "text/css" => Self::Css,
             "image/avif" => Self::AvifImage,
+            "video/mp4" => Self::Mp4Video,
             _ => Self::PlainText,
         }
     }
@@ -154,6 +156,7 @@ impl fmt::Display for ContentType {
             ContentType::Css => write!(f, "text/css; charset=utf-8"),
             ContentType::PlainText => write!(f, "text/plain; charset=utf-8"),
             ContentType::AvifImage => write!(f, "image/avif"),
+            ContentType::Mp4Video => write!(f, "video/mp4"),
         }
     }
 }
