@@ -1,13 +1,16 @@
 #![allow(clippy::unused_io_amount)]
 use std::{sync::{Arc, Mutex}, net::SocketAddr};
 
-use log::{info, error};
+use log::{info, error, LevelFilter};
+
 use tokio::{
     io::AsyncReadExt,
     net::{TcpListener, TcpStream},
 };
 
 use clap::{Arg, App};
+
+use env_logger::Builder;
 
 mod http;
 mod server;
@@ -33,9 +36,21 @@ async fn main() {
              .value_name("PORT")
              .help("Sets a custom port")
              .takes_value(true))
+        .arg(Arg::with_name("log")
+             .long("log")
+             .value_name("LOG")
+             .help("Enables logging")
+             .takes_value(false))
         .get_matches();
 
+    if matches.is_present("log") {
+        Builder::new()
+            .filter(None, LevelFilter::Info)
+            .init();
+    }
+
     let port = matches.value_of("port").unwrap_or("5000");
+
     
     let listener = TcpListener::bind(format!("127.0.0.1:{}", port)).await.unwrap();
     println!("Server start at http://127.0.0.1:{}", port);
