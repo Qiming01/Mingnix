@@ -79,9 +79,7 @@ impl Handler for StaticFile<'_> {
         if let Ok(metadata) = fs::metadata(format!(".{path}")).await {
             if metadata.is_dir() {
                 let mut html = String::new();
-                html.push_str(
-                    "<html>\n<head>\n<title>Directory Listing</title>\n</head>\n<body>\n",
-                );
+                html.push_str(format!("<html>\n<head>\n<title>{path}</title>\n</head>\n<body>\n").as_str());
                 html.push_str("<h1>Directory Listing</h1>\n");
                 // Generate links for files
                 let mut dir_entries = tokio::fs::read_dir(format!(".{path}")).await.unwrap();
