@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
-use log::info;
+
 use tokio::{fs, io::AsyncWriteExt, net::TcpStream};
 
 use crate::{
@@ -93,7 +93,7 @@ impl Handler for StaticFile<'_> {
         let start_index = buf.find("GET ").unwrap() + 4;
         let end_index = buf.find(" HTTP/").unwrap();
         let mut path = String::from(&buf[start_index..end_index]);
-        println!("Get: .{}", path);
+        //println!("Get: .{}", path);
         if let Ok(metadata) = fs::metadata(format!(".{path}")).await {
             if metadata.is_dir() {
                 if !path.ends_with('/') {
@@ -149,6 +149,7 @@ impl Handler for NotFound {
         }
     }
 }
+
 // Parse the `Content-Type` from request
 fn parse_content_type(req: &str) -> ContentType {
     // .html or .htm
