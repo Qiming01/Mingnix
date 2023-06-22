@@ -1,6 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
+use log::info;
 use tokio::{fs, io::AsyncWriteExt, net::TcpStream};
 
 use crate::{
@@ -86,50 +87,66 @@ impl Handler for Echo<'_> {
 #[async_trait]
 impl Handler for StaticFile<'_> {
     async fn handle(&self, stream: &mut TcpStream, shared_data: Arc<Mutex<SharedData>>) {
-        // Static file path
-        // Read the path from request (struct)
         let buf = &String::from_utf8_lossy(self.path_buf); // Buffer to string
-
-        // GET /static/...
-        for i in buf.split_whitespace() {
-            if i.contains("/static/") {
-                let path = i.splitn(2, "static/").nth(1).unwrap();
-                let file = fs::read(format!("static/{path}")).await;
-
-                if let Ok(f) = file {
-                    let content_type = parse_content_type(path);
-
-                    let mut response = Response::new();
-                    let response = response
-                        .set_status(HttpStatus::Ok)
-                        .set_headers("Content-Type".into(), content_type.to_string())
-                        .set_headers("Content-Length".into(), f.len().to_string())
-                        .set_body(&f);
-
-                    stream.write_all(&response.as_bytes()).await.unwrap();
-                    stream.flush().await.unwrap();
+        // GET /...
+        //println!("{}", buf);
+        let start_index = buf.find("GET ").unwrap() + 4;
+        let end_index = buf.find(" HTTP/").unwrap();
+        let mut path = String::from(&buf[start_index..end_index]);
+        println!("Get: .{}", path);
+        if let Ok(metadata) = fs::metadata(format!(".{path}")).await {
+            if metadata.is_dir() {
+                if !path.ends_with('/') {
+                    path = format!(".{}{}", path, "/index.html");
+                    //println!("{}", path);
                 } else {
-                    NotFound.handle(stream, Arc::clone(&shared_data)).await;
+                    path = format!(".{}{}", path, "index.html");
+                    //println!("{}", path);
                 }
+            } else {
+                path = format!(".{}", path);
+                //println!("{}", path);
             }
+            //println!("Get: {}", path);
+            let file = fs::read(&path).await;
+            if let Ok(f) = file {
+                let content_type = parse_content_type(&path);
+    
+                let mut response = Response::new();
+                let response = response
+                    .set_status(HttpStatus::Ok)
+                    .set_headers("Content-Type".into(), content_type.to_string())
+                    .set_headers("Content-Length".into(), f.len().to_string())
+                    .set_body(&f);
+    
+                stream.write_all(&response.as_bytes()).await.unwrap();
+                stream.flush().await.unwrap();
+            } else {
+                NotFound.handle(stream, Arc::clone(&shared_data)).await;
+            }
+        } else {
+            NotFound.handle(stream, Arc::clone(&shared_data)).await;
         }
+        
+        
     }
 }
 
 #[async_trait]
 impl Handler for NotFound {
     async fn handle(&self, stream: &mut TcpStream, _shared_data: Arc<Mutex<SharedData>>) {
-        let body = r#"<!doctype html><html><head><meta charset="utf-8"><title>404</title><style>html{margin:0;padding:0;background-color:white}body,html{width:100%;height:100%;overflow:hidden}#svgContainer{width:640px;height:512px;background-color:white;position:absolute;top:0;left:0;right:0;bottom:0;margin:auto}</style></head><body><script type="text/javascript"src="static/bodymovin.js"></script><script type="text/javascript"src="static/data.js"></script><div id="svgContainer"></div><script type="text/javascript">var svgContainer=document.getElementById("svgContainer");var animItem=bodymovin.loadAnimation({wrapper:svgContainer,animType:"svg",loop:true,animationData:JSON.parse(animationData)});</script></body></html>"#;
+        let file = fs::read("./static/404.html").await;
+        if let Ok(f) = file {
+            let mut response = Response::new();
+            let response = response
+                .set_status(HttpStatus::NotFound)
+                .set_headers("Content-Type".into(), ContentType::Html.to_string())
+                .set_headers("Content-Length".into(), f.len().to_string())
+                .set_body(&f);
 
-        let mut response = Response::new();
-        let response = response
-            .set_status(HttpStatus::NotFound)
-            .set_headers("Content-Type".into(), ContentType::Html.to_string())
-            .set_headers("Content-Length".into(), body.len().to_string())
-            .set_body(body.as_bytes());
-
-        stream.write_all(&response.as_bytes()).await.unwrap();
-        stream.flush().await.unwrap();
+            stream.write_all(&response.as_bytes()).await.unwrap();
+            stream.flush().await.unwrap();
+        }
     }
 }
 // Parse the `Content-Type` from request

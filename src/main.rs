@@ -82,23 +82,27 @@ async fn main() {
 }
 
 async fn route(stream: &mut TcpStream, buffer: &[u8], shared_data: Arc<Mutex<SharedData>>) {
-    if buffer.starts_with(b"GET / HTTP/1.1") {
-        // Index page
-        Index.handle(stream, shared_data).await;
-    } else if buffer.starts_with(b"GET /static/") {
-        // Static file
+    // if buffer.starts_with(b"GET / HTTP/1.1") {
+    //     // Index page
+    //     Index.handle(stream, shared_data).await;
+    // } else if buffer.starts_with(b"GET /static/") {
+    //     // Static file
+    //     let handler = StaticFile { path_buf: buffer };
+    //     handler.handle(stream, shared_data).await;
+    // } else if buffer.starts_with(b"GET /count") {
+    //     // Visit count
+    //     VisitCount.handle(stream, shared_data).await;
+    // } else if buffer.starts_with(b"GET /echo") {
+    //     // Echo
+    //     let handler = Echo { path_buf: buffer };
+    //     handler.handle(stream, shared_data).await;
+    // } else {
+    //     // 404
+    //     NotFound.handle(stream, shared_data).await;
+    // }
+    if buffer.starts_with(b"GET /") {
         let handler = StaticFile { path_buf: buffer };
         handler.handle(stream, shared_data).await;
-    } else if buffer.starts_with(b"GET /count") {
-        // Visit count
-        VisitCount.handle(stream, shared_data).await;
-    } else if buffer.starts_with(b"GET /echo") {
-        // Echo
-        let handler = Echo { path_buf: buffer };
-        handler.handle(stream, shared_data).await;
-    } else {
-        // 404
-        NotFound.handle(stream, shared_data).await;
     }
 }
 
