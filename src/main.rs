@@ -18,7 +18,7 @@ use env_logger::Builder;
 mod http;
 mod server;
 
-use server::handlers::{Echo, Handler, StaticFile, VisitCount};
+use server::handlers::{Echo, Handler, StaticFile, VisitCount, PHPFile};
 
 #[derive(Clone, Default)]
 pub struct SharedData {
@@ -48,10 +48,23 @@ async fn main() {
                 .help("Enables logging")
                 .takes_value(false),
         )
+        .arg(
+            Arg::with_name("php")
+                .long("php")
+                .value_name("PHP")
+                .help("Enables php")
+                .takes_value(false),
+        )
         .get_matches();
 
     if matches.is_present("log") {
         Builder::new().filter(None, LevelFilter::Info).init();
+    }
+
+    let mut php_on: bool = false;
+
+    if matches.is_present("php") {
+        php_on = true;
     }
 
     let port = matches.value_of("port").unwrap_or("5000");
@@ -75,8 +88,13 @@ async fn main() {
                     //info!("{}", String::from_utf8_lossy(&buffer));
                     // Log the client's information
                     log_client_info(addr, &buffer);
-
-                    route(&mut stream, &buffer, shared_data).await;
+                    let buf = String::from_utf8_lossy(&buffer);
+                    if php_on && buf.contains("php"){
+                        let handler = PHPFile { path_buf: &buffer };
+                        handler.handle(&mut stream, shared_data).await;
+                    } else {
+                        route(&mut stream, &buffer, shared_data).await;
+                    }
                 });
             }
             Err(e) => {
