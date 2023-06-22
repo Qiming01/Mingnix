@@ -70,47 +70,71 @@ impl Handler for Echo<'_> {
 impl Handler for StaticFile<'_> {
     async fn handle(&self, stream: &mut TcpStream, shared_data: Arc<Mutex<SharedData>>) {
         let buf = &String::from_utf8_lossy(self.path_buf); // Buffer to string
-        // GET /...
-        //println!("{}", buf);
+                                                           // GET /...
+                                                           //println!("{}", buf);
         let start_index = buf.find("GET ").unwrap() + 4;
         let end_index = buf.find(" HTTP/").unwrap();
         let mut path = String::from(&buf[start_index..end_index]);
         //println!("Get: .{}", path);
         if let Ok(metadata) = fs::metadata(format!(".{path}")).await {
             if metadata.is_dir() {
-                if !path.ends_with('/') {
-                    path = format!(".{}{}", path, "/index.html");
-                    println!("{}", path);
-                } else {
-                    path = format!(".{}{}", path, "index.html");
-                    println!("{}", path);
+                let mut html = String::new();
+                html.push_str(
+                    "<html>\n<head>\n<title>Directory Listing</title>\n</head>\n<body>\n",
+                );
+                html.push_str("<h1>Directory Listing</h1>\n");
+                // Generate links for files
+                let mut dir_entries = tokio::fs::read_dir(format!(".{path}")).await.unwrap();
+                while let Some(entry) = dir_entries.next_entry().await.unwrap() {
+                    let file_name = entry.file_name();
+                    let file_path = entry.path();
+                    println!("name:     {}", file_name.to_string_lossy());
+                    println!("path:     {}", file_path.to_string_lossy());
+                    let file_path = file_path.to_string_lossy();
+                    let current_path_vec: Vec<&str> = file_path.split('/').collect();
+                    let current_path = current_path_vec.iter().rev().nth(1).unwrap();
+                    println!("current:      {}", current_path);
+                    html.push_str(&format!(
+                                "<a href=\"./{}/{}\">{}</a><br>\n",
+                                current_path,
+                                file_name.to_string_lossy(),
+                                file_name.to_string_lossy()
+                            ));
                 }
-            } else {
-                path = format!(".{}", path);
-                //println!("{}", path);
-            }
-            //println!("Get: {}", path);
-            let file = fs::read(&path).await;
-            if let Ok(f) = file {
-                let content_type = parse_content_type(&path);
-    
+                html.push_str("</body>\n</html>");
                 let mut response = Response::new();
                 let response = response
                     .set_status(HttpStatus::Ok)
-                    .set_headers("Content-Type".into(), content_type.to_string())
-                    .set_headers("Content-Length".into(), f.len().to_string())
-                    .set_body(&f);
-    
+                    .set_headers("Content-Type".into(), ContentType::Html.to_string())
+                    .set_headers("Content-Length".into(), html.len().to_string())
+                    .set_body(&html.as_bytes());
+
                 stream.write_all(&response.as_bytes()).await.unwrap();
                 stream.flush().await.unwrap();
             } else {
-                NotFound.handle(stream, Arc::clone(&shared_data)).await;
+                path = format!(".{}", path);
+                //println!("{}", path);
+                //println!("Get: {}", path);
+                let file = fs::read(&path).await;
+                if let Ok(f) = file {
+                    let content_type = parse_content_type(&path);
+
+                    let mut response = Response::new();
+                    let response = response
+                        .set_status(HttpStatus::Ok)
+                        .set_headers("Content-Type".into(), content_type.to_string())
+                        .set_headers("Content-Length".into(), f.len().to_string())
+                        .set_body(&f);
+
+                    stream.write_all(&response.as_bytes()).await.unwrap();
+                    stream.flush().await.unwrap();
+                } else {
+                    NotFound.handle(stream, Arc::clone(&shared_data)).await;
+                }
             }
         } else {
             NotFound.handle(stream, Arc::clone(&shared_data)).await;
         }
-        
-        
     }
 }
 
